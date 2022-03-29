@@ -58,8 +58,11 @@ class CODEDIFF():
             self.procWinmrg()
 
             htmls = glob.glob(os.path.join(self.htmlDir, "*.html"))
+            driver = lib.convPdf.initDriver()
             for html in htmls:
-                lib.convPdf.html2Pdf(html, self.htmlDir)
+                print(os.path.basename(html).split(".")[0])
+                lib.convPdf.html2Pdf(html, self.htmlDir, driver)
+            lib.convPdf.endDriver(driver)
             lib.convPdf.joinPdfs(self.htmlDir, self.outDir)
 
         except:

@@ -28,4 +28,4 @@ scoop bucket add extras
 # Scoopのインストールディレクトリの取得
 $SCOOP_ROOT = if ($env:SCOOP) {$env:SCOOP} else {"$home\scoop"}
 
-scoop install winmerge # winmerge
+scoop install extras/winmerge # winmerge

@@ -22,6 +22,7 @@ PDF_CONF = {# output PDF config.
         "printBackground": True, # pinrt backGround
         "paperWidth": 11.69, # A4
         "paperHeight": 8.27,
+        "scale": 0.7,
         # "displayHeaderFooter": True, # 印刷時のヘッダー、フッターを表示
 }
 
@@ -54,16 +55,7 @@ def joinPdfs(pdfDir, outDir):
 
 ### Setting conf. for saving as PDF ###
 ### Convert an opned web page or HTML file to PDF ###
-def html2Pdf(html, outdir):
-    ## Setting chrome driver
-    options = webdriver.ChromeOptions()
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-gpu')
-    driver = webdriver.Chrome(
-    executable_path=ChromeDriverManager().install(),
-    options=options )
-
+def html2Pdf(html, outdir, driver):
     ## Convert html to PDF
     driver.get("file:///" + html)
     pdf_base64 = driver.execute_cdp_cmd("Page.printToPDF", PDF_CONF)
@@ -73,6 +65,22 @@ def html2Pdf(html, outdir):
     path = setOutputName(html, outdir)
     with open(path, 'bw') as f: f.write(pdf)
 
-    ## Quit driver
+
+### Setting chrome driver ###
+def initDriver():
+    options = webdriver.ChromeOptions()
+    options.add_argument('--headless')
+    options.add_argument('--no-sandbox')
+    options.add_argument('--disable-gpu')
+    driver = webdriver.Chrome(
+    executable_path=ChromeDriverManager().install(),
+    options=options 
+    )
+
+    return driver
+
+
+### Quit driver ###
+def endDriver(driver):
     driver.close()
     driver.quit()

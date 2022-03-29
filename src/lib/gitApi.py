@@ -19,9 +19,10 @@ class GITDIFF():
         self.repo = git.Repo(self.repoPath) # The local repsitory information
         self.curBranch = self.repo.active_branch.name # Get the current baranch name.
         self.mthdList = [] # Fixed method List
-        self.glbVarList =[] # Fixed global variable List
-        self.fixfileList= [] # Fixed fixed files
+        self.macroList =[] # Fixed global variable List
+        self.fixFileList= [] # Fixed fixed files
         self.cFuncList =[] # C language functions 
+        self.allChgList = np.array([])
         self.curHash = "" # New branch SHA-1
         self.srcHash = "" # Old branch SHA-1
 
@@ -106,13 +107,14 @@ class GITDIFF():
         ## Run "git diff" command on Powershell
         cmd = ["git", "diff", self.srcHash, self.curHash] + ext
         diff = subprocess.run(cmd, cwd=self.repoPath,
-                                                    check=True, shell=True, stdout=subprocess.PIPE)
+                                check=True, shell=True, stdout=subprocess.PIPE)
         diff = diff.stdout.decode(encoding="shift-jis", errors='ignore').split('\n')
         return diff
 
 
     ### Extract some information from the unified diff ### 
-    def srchUniDiff(self, diff, rgxp, lineHead, headFlg=False):
+    def srchUniDiff(self, rgxp, lineHead, headFlg=False, typ=""):
+        diff = self.getUdiff()
         resList = np.array([], dtype=object) # The serach result for return
         lNumList =np.array([], dtype=int) # The row num. in unidiff
         extrPtn = re.compile(rgxp) #The extra patarn in regxp
@@ -126,63 +128,67 @@ class GITDIFF():
                     else      : res=("".join(chkStr.group()))
                     resList = np.append(resList ,res.replace(" ",""))
                     lNumList = np.append(lNumList, i)
-        resList = np.hstack((lNumList[:,np.newaxis], resList[:,np.newaxis]))
-        # resList = list(set(resList)) # Delete overlapping componets
-        # resList = sorted(resList)
-        # for m in resList: print(m)
+        typList = np.full((resList.shape[0], 1), typ, dtype=object)
+        resList = np.c_[lNumList[:,np.newaxis], resList[:,np.newaxis], typList]
+        
+        ## Gather changed information(class method, function and macro etc..).
+        if typ != "file": # Exclusion change file name
+            if len(self.allChgList): self.allChgList = np.vstack((self.allChgList, resList)) 
+            else              : self.allChgList = resList
         return resList
 
 
     ### Extract changes and row no. from the unified diff ###
-    def getChgDetale(self):
-        diff = self.getUdiff()
-        self.mthdList = self.srchUniDiff(diff, "(?<=\s)[\w]+::[\w]+(?=\()", "@@")   # Calass method
-        self.glbVarList = self.srchUniDiff(diff, "(?<=#define)\s+[\w]+", "+")       # Macro
-        self.fixfileList = self.srchUniDiff(diff, "[\w]+\.[\w]+", "diff")           # fileName
+    def getChgMthdLst(self):# Calass method
+        if len(self.mthdList) == 0:
+            self.mthdList = self.srchUniDiff("(?<=\s)[\w]+::[\w]+(?=\()", "@@", typ="method")       
 
-        self.cFuncList = self.srchUniDiff(diff, "[\w]+\s*(?=\()", "@@")
-        self.cFuncList = np.vstack((self.cFuncList, self.srchUniDiff(diff, "[\w]+\s+[\w]+(?=\()", "+", True)))
+    def getChgMacroLst(self):# Macro
+        if len(self.macroList) == 0:
+            self.macroList = self.srchUniDiff("(?<=#define)\s+[\w]+", "+", typ="macro")
+
+    def getChgCFuncLst(self):
+        if len(self.cFuncList) == 0:
+            self.cFuncList = self.srchUniDiff("[\w]+\s*(?=\()", "@@", typ="func")
+            self.cFuncList = np.vstack((self.cFuncList, 
+                                        self.srchUniDiff("[\w]+\s+[\w]+(?=\()", "+", True, typ="func")))
+        return self.cFuncList
+
+    def getChgFileLst(self):# fileName
+        if len(self.fixFileList) == 0:
+            self.fixFileList = self.srchUniDiff("[\w]+\.[\w]+", "diff", typ="file")  
+        return self.fixFileList
 
 
-    ### Identify changes  ###
-    def idnetchgFile(self):
+    ### Create all change list  ###
+    def getAllChgLst(self):
+        self.getChgMthdLst()
+        self.getChgMacroLst()
+        self.getChgCFuncLst()
+        self.getChgCFuncLst()
+        
         chgDetail = []
-        for i, fl in enumerate(self.fixfileList):# **List = [row no., ** name] 
-            for j, mthd in enumerate(self.mthdList):
-                if (i < self.fixfileList.shape[0] - 1):
-                    row = [fl[1], mthd[1].split("::")[0], mthd[1].split("::")[-1]]
-                    if(fl[0] <= mthd[0] and mthd[0] < self.fixfileList[i+1,0] ):
-                        if not(row in chgDetail): chgDetail.append(row) 
-                else:
-                    if(fl[0] <= mthd[0]): # Final fixed file 
-                        if not(row in chgDetail): chgDetail.append(row)
+        for i, fl in enumerate(self.fixFileList):# **List = [row no., ** name] 
+            for chg in self.allChgList:
+                if chg[3] == "method": row = [fl[1], chg[1].split("::")[0], chg[1].split("::")[-1]] # file name, class, method
+                else                 : row = [fl[1], chg[3], chg[1]] # file name, type, target name(function ,macro)
 
-            for k, glb in enumerate(self.glbVarList):
-                if (i < self.fixfileList.shape[0] - 1):
-                    if(fl[0] <= glb[0] and glb[0] < self.fixfileList[i+1,0] ):
-                        chgDetail.append([fl[1], "-", glb[1]]) 
-                else:
-                    if(fl[0] <= glb[0]):
-                        chgDetail.append([fl[1], "-", glb[1]])
-            
-            for cFunc in self.cFuncList:
-                if (i < self.fixfileList.shape[0] - 1):
-                    if(fl[0] <= cFunc[0] and cFunc[0] < self.fixfileList[i+1,0] ):
-                        if not(cFunc[0] in self.mthdList[:,0]): 
-                            chgDetail.append([fl[1], "--", cFunc[1]]) 
-                else:
-                    if(fl[0] <= cFunc[0]):
-                        chgDetail.append([fl[1], "--", cFunc[1]])
-        return chgDetail
+                if (i < self.fixFileList.shape[0] - 1):
+                    if(fl[0] <= chg[0] and chg[0] < self.fixFileList[i+1,0] ):
+                        if not(row in chgDetail): chgDetail.append(row)
+                else: # Last line
+                    if(fl[0] <= chg[0]): # Last fixed file 
+                        if not(row in chgDetail): chgDetail.append(row)
+        return chgDetail # [File name, class or type , function(macro) name ]
 
 
     def getChgFileRows(self):
         diff = self.getUdiff()
         diffInfoList=[]
-        for i, info in enumerate(self.fixfileList):
-            sL = self.fixfileList[i,0] #File start line
-            if i < len(self.fixfileList)-1:
-                eL = self.fixfileList[i+1,0] #File end line
+        for i, info in enumerate(self.fixFileList):
+            sL = self.fixFileList[i,0] #File start line
+            if i < len(self.fixFileList)-1:
+                eL = self.fixFileList[i+1,0] #File end line
                 fileRows = diff[sL:eL]
             else:
                 fileRows = diff[sL:]

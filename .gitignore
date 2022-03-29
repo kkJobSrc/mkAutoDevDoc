@@ -16,6 +16,9 @@
 *.txt
 
 conf/*.json
+result/*
 
+!result/.gitkeep
 !conf/setup.json
 !conf/default.json
+

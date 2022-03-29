@@ -64,13 +64,13 @@ class UND():
 
 
     ### Get global variavle info ###
-    def getGlbVarInfo(self, glbVarList):
-        if (glbVarList.shape[0] > 0):
+    def getGlbVarInfo(self, macroList):
+        if (macroList.shape[0] > 0):
             dfList = [["Name", "Ref.", "Ent.", "File", "Row", "Col."]]
             print("--Get fixed macro information")
             for ent in self.db.ents("Macro"):
                 #print(ent)
-                if ent.name() in glbVarList:
+                if ent.name() in macroList:
                     print(ent.name())
                     for ref in ent.refs():
                         dfList.append(list(map(str, [ent.name(), ref.kindname(), ref.ent(), # Macro name, def. or use, ent. name 
@@ -86,13 +86,13 @@ class UND():
             print("== Star UND result analysis ==")
             self.db = understand.open(self.dbPath)  
             ## Proc git diff analysis
-            chgList = gitApi.idnetchgFile()
+            chgList = gitApi.getAllChgLst()
             lib.common.outList2Csv(chgList, self.outDir, "chgFileList.csv")
 
             ## Proc. understand analysis
             self.drawUdnGraph(gitApi.mthdList) # Draw callby graphs with undarstand
             self.drawCFunc(gitApi.cFuncList)
-            chgList = self.getGlbVarInfo(gitApi.glbVarList ) # Get global variavle info
+            chgList = self.getGlbVarInfo(gitApi.macroList ) # Get global variavle info
             lib.common.outList2Csv(chgList, self.outDir, "chgMacroList.csv")
 
         # except:

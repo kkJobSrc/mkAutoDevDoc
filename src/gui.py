@@ -250,7 +250,7 @@ class GUI():
                                     self.branchName.get(), # Branch name
                                     int(self.comNum.get()) ) # Numbaer of return
         gitApi.getHash() # Get target SHA-1's
-        gitApi.getChgDetale() # Analysis Git unidiff (chg. file names, mehtd etc..)
+        gitApi.getAllChgLst() # Analysis Git unidiff (chg. file names, mehtd etc..)
         
         ## Clean up and create Output directory
         lib.common.cleanUpOutDir(self.outPath.get())
