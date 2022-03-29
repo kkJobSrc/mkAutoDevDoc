@@ -1,0 +1,12 @@
+*.png
+*.pyc
+*.pdf
+*.html
+*.c
+*.cpp
+*.h
+
+conf/*.json
+
+!conf/setup.json
+!conf/default.json

@@ -1,0 +1,13 @@
+{
+    "winmrg":
+    {
+        "contesxt": 7
+    },
+
+    "und":
+    {
+        "path":"C:/Program Files/SciTools/bin/pc-win64/Python",
+        "disp_level" :2,
+        "disp_mthd_name" :"Fullname"
+    }
+}

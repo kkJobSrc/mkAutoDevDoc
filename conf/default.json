@@ -1,0 +1,11 @@
+{
+  "repository_path" : "C:/Users/1250207/Desktop/work/src/TFD14C",
+  "branch_name"     : "fix/powFailSave_Exx",
+  "commit_num"      : 4,
+  "output_path"     : "./result/test",
+  "code_diff_flg"   : true,
+  "pgr_dir_path"    : "C:/Users/1250207/Desktop/work/myTools/pgr/csv/FD18-046",
+  "pgr_flg"         : true,
+  "und_proc_flg"    : true,
+  "und_fig_flg"     : true
+}
