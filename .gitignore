@@ -5,6 +5,15 @@
 *.c
 *.cpp
 *.h
+*.csv
+*.ini
+*.bat
+*.rc
+*.rc2
+*.vcxproj
+*.sln
+*.ico
+*.txt
 
 conf/*.json
 
