@@ -37,30 +37,25 @@ class UND():
 
 
     ### Draw callby graphs with undarstand ###
-    def drawUdnGraph(self, mthdList):
-        if (mthdList.shape[0] > 0):
-            print("--Get fixed class method information")
-            for func in self.db.ents("function, method, procedure"):
-                if func.longname() in mthdList:
-                    print(func.longname())
-                    figName = "callby_" + func.longname() + ".png"
-                    file = os.path.join(self.outDir, figName.replace("::","_"))
-                    func.draw("Called By", file, OPTIONS)
-            print("--Finish drawing praphs.\n")
-
-
-    ### Draw C function called by graph ##
-    def drawCFunc(self, cFuncList):
-        if (cFuncList.shape[0] > 0):
-            print("--Get fixed C functidons information")
-            for func in self.db.ents("function, method, procedure"):
-                if func.longname() in cFuncList:
-                    print(func.longname())
-                    figName = "callby_" + func.longname() + ".png"
-                    # figName = "callby_" + func.file() + "_" + func.longname() + ".png"
-                    file = os.path.join(self.outDir, figName)
-                    func.draw("Called By", file, OPTIONS)
-            print("--Finish drawing praphs.\n")
+    def drawCallbyGraph(self, chgLst):
+        if(len(chgLst) != 0):
+            print("-- Draw called by Graph")
+            for chg in chgLst: # chgLst = [file name, typ or class, func. name]
+                if chg[1] != "macro":
+                    if chg[1] == "func": #C function
+                        uniName = "c"+ chg[2] + "@file=RELATIVE:" + chg[0]
+                        graphName = os.path.basename(chg[0]).split(".")[0]
+                        graphName += "_" + chg[2]+".png"
+                        ent = self.db.lookup_uniquename(uniName)
+                        
+                    else: #Cpp method
+                        name = chg[1] + "::" + chg[2]
+                        graphName = chg[1] + "_" + chg[2] + ".png"
+                        ent = self.db.lookup(name)[0]
+                    print(ent.longname())
+                    path = os.path.join(self.outDir, graphName)
+                    ent.draw("Called By", path, OPTIONS)
+            print("-- END")
 
 
     ### Get global variavle info ###
@@ -87,13 +82,12 @@ class UND():
             self.db = understand.open(self.dbPath)  
             ## Proc git diff analysis
             chgList = gitApi.getAllChgLst()
-            lib.common.outList2Csv(chgList, self.outDir, "chgFileList.csv")
 
             ## Proc. understand analysis
-            self.drawUdnGraph(gitApi.mthdList) # Draw callby graphs with undarstand
-            self.drawCFunc(gitApi.cFuncList)
-            chgList = self.getGlbVarInfo(gitApi.macroList ) # Get global variavle info
-            lib.common.outList2Csv(chgList, self.outDir, "chgMacroList.csv")
+            self.drawCallbyGraph(chgList)
+            chgMacros = self.getGlbVarInfo(gitApi.macroList ) # Get global variavle info
+            lib.common.outList2Csv(chgList, self.outDir, "chgFileList.csv")
+            lib.common.outList2Csv(chgMacros, self.outDir, "chgMacroList.csv")
 
         # except:
         #     print("** UND analysis fault. **")

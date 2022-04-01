@@ -129,7 +129,7 @@ class GITDIFF():
                     resList = np.append(resList ,res.replace(" ",""))
                     lNumList = np.append(lNumList, i)
         typList = np.full((resList.shape[0], 1), typ, dtype=object)
-        resList = np.c_[lNumList[:,np.newaxis], resList[:,np.newaxis], typList]
+        resList = np.c_[lNumList[:,np.newaxis], resList[:,np.newaxis], typList]# row, target, type
         
         ## Gather changed information(class method, function and macro etc..).
         if typ != "file": # Exclusion change file name
@@ -149,14 +149,17 @@ class GITDIFF():
 
     def getChgCFuncLst(self):
         if len(self.cFuncList) == 0:
-            self.cFuncList = self.srchUniDiff("[\w]+\s*(?=\()", "@@", typ="func")
+            self.cFuncList = self.srchUniDiff("(?<=\s)[\w]+\s*(?=\()", "@@", typ="func")
             self.cFuncList = np.vstack((self.cFuncList, 
-                                        self.srchUniDiff("[\w]+\s+[\w]+(?=\()", "+", True, typ="func")))
+                                        self.srchUniDiff("(?<=\s)[\w]+\s+[\w]+(?=\()", "+", True, typ="func")))
         return self.cFuncList
 
     def getChgFileLst(self):# fileName
         if len(self.fixFileList) == 0:
-            self.fixFileList = self.srchUniDiff("[\w]+\.[\w]+", "diff", typ="file")  
+            self.fixFileList = self.srchUniDiff("b/.*", "diff", typ="file")
+            for i, f in enumerate(self.fixFileList):
+                self.fixFileList[i, 1] = \
+                (re.search(r'/FD/.*', f[1]).group()).replace("/", "\\")
         return self.fixFileList
 
 
@@ -165,13 +168,13 @@ class GITDIFF():
         self.getChgMthdLst()
         self.getChgMacroLst()
         self.getChgCFuncLst()
-        self.getChgCFuncLst()
+        self.getChgFileLst()
         
         chgDetail = []
         for i, fl in enumerate(self.fixFileList):# **List = [row no., ** name] 
             for chg in self.allChgList:
-                if chg[3] == "method": row = [fl[1], chg[1].split("::")[0], chg[1].split("::")[-1]] # file name, class, method
-                else                 : row = [fl[1], chg[3], chg[1]] # file name, type, target name(function ,macro)
+                if chg[2] == "method": row = [fl[1], chg[1].split("::")[0], chg[1].split("::")[-1]] # file name, class, method
+                else                 : row = [fl[1], chg[2], chg[1]] # file name, type, target name(function ,macro)
 
                 if (i < self.fixFileList.shape[0] - 1):
                     if(fl[0] <= chg[0] and chg[0] < self.fixFileList[i+1,0] ):
