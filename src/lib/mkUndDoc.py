@@ -45,7 +45,7 @@ def writeMdTxt(table, outDir):
     title= preTitle = "" #The body titel and previous chapter title
 
     for row in table.itertuples():
-        if (row.cls != "macro"):
+        if (row.cls != "macro" and row.fig):
             ## Initalize new page flag
             newpageFlg = False
 

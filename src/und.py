@@ -67,10 +67,13 @@ class UND():
                         ent = self.db.lookup(name)[0]# Get entity wiht name
     
                     ## Output called by fig
-                    print(ent.longname())
-                    path = os.path.join(self.outDir, graphName).replace(os.path.sep, '/')
-                    ent.draw("Called By", path, OPTIONS)
-                    self.chgLstTab.iloc[row[0], 3] = graphName
+                    if not(ent is None):
+                        print(ent.longname())
+                        path = os.path.join(self.outDir, graphName).replace(os.path.sep, '/')
+                        ent.draw("Called By", path, OPTIONS)
+                        self.chgLstTab.iloc[row[0], 3] = graphName
+                    else:
+                        print("Draw graph fault: ", row.func, "(", row.cls, ")")
             print("-- END")
 
 

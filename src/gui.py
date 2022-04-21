@@ -257,7 +257,7 @@ class GUI():
         lib.common.createOutDir(self.outPath.get())
 
         ### Exract PGR
-        if not(self.pgrDir is None): # Input directory name
+        if (self.pgrDir.get()): # Input directory name
             if self.pgrFlg.get(): # Option flg. is Ture
                 pgrResList = glob.glob(os.path.join(self.pgrDir.get(), "*.csv"))
                 if pgrResList: #Exist PRG result csv

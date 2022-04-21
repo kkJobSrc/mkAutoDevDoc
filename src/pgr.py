@@ -8,8 +8,7 @@ class PGR():
 	def __init__(self, csvList, ouputDir):
 		self.csvList = csvList
 		self.OutDir = ouputDir
-		self.resFileName = "staticRes.csv"
-		self.outPath = os.path.join(self.OutDir, self.resFileName)
+		self.resFileName = "extract_prg_result.csv"
 
 
 	### Reference PGR results ###
@@ -21,7 +20,7 @@ class PGR():
 				csvName = os.path.splitext(os.path.basename(name))[0]
 				csvUsName = csvName.split("_")[-1]
 
-				if info[0] in csvName or info[0] in csvUsName:
+				if  csvUsName in info[0]:
 					df = pd.read_csv(name, encoding="SHIFT-JIS")
 					resTable = df.values.tolist()
 
@@ -47,7 +46,7 @@ class PGR():
 			else: #Exist code point out
 				rows = [[i+1] + r for i, r in enumerate(prgRes[key])]
 				outTable.extend(rows)
-		lib.common.outList2Csv(outTable, self.OutDir, "pgrResult.csv")
+		lib.common.outList2Csv(outTable, self.OutDir, self.resFileName)
 
 
 	def mainProc(self, gitApi):
