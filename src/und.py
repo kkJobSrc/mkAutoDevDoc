@@ -36,6 +36,8 @@ class UND():
             self.dbPath = os.path.join(self.dbDir, "analyze.udb")
         self.outDir = outDir # An output graph directory
         self.chgLstTab = pd.DataFrame()
+        self.chgMacros = list()
+        self.mdName = "affect_analysis_result.md"
 
 
     ### Draw callby graphs with undarstand ###
@@ -95,13 +97,29 @@ class UND():
 
     ### Arrange output table ###
     def outputChgTable(self):
+        ## Make pandas data frame for Output  
         outTable = self.chgLstTab
         outTable = outTable[outTable["cls"] != "macro"]
         outTable["file"] = outTable["file"].replace(r"^.*\\", "", regex=True)
         del outTable["fig"]
 
+        ## Output changed file list to CSV
         path = os.path.join(self.outDir, "chang_file_list.csv")
         outTable.to_csv(path)
+
+        ## Output detail info. changed maros 
+        lib.common.outList2Csv(self.chgMacros, self.outDir, "change_macro_list.csv") # output all result to CSV
+
+
+    ### Output mark-daon documents ###
+    def outputMcDoc(self):
+        lib.mkUndDoc.writeCallByMdTxt(self.chgLstTab, self.outDir, self.mdName) # Make doc. attached called by graph in markdown
+
+        ## Make macro table
+        if ( len(self.chgMacros) >= 2): # Were macros changed? 
+            macroTab = pd.DataFrame(self.chgMacros[1:], columns=self.chgMacros[0])
+            outTab = macroTab.loc[:, ["Name", "Ref.", "File", "Row"]]
+            lib.mkUndDoc.writeMacroyMdTxt(outTab, self.outDir, self.mdName)
 
 
     ### Main process ###
@@ -114,11 +132,12 @@ class UND():
             chgList = gitApi.getAllChgLst()
 
             ## Proc. understand analysis
-            self.drawCallbyGraph(chgList)
-            chgMacros = self.getGlbVarInfo(gitApi.macroList ) # Get global variavle info
-            lib.mkUndDoc.writeMdTxt(self.chgLstTab, self.outDir)
+            self.drawCallbyGraph(chgList) # output call by graph with Undestand
+            self.chgMacros = self.getGlbVarInfo(gitApi.macroList ) # Get global variavle info
+
             self.outputChgTable()
-            lib.common.outList2Csv(chgMacros, self.outDir, "change_macro_list.csv")
+            self.outputChgTable() # output CSV 
+            self.outputMcDoc() # output mark-down txt
 
         # except:
         #     print("** UND analysis fault. **")

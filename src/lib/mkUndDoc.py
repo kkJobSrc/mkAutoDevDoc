@@ -8,7 +8,7 @@ NEW_PAGE_SEC_NUM = 3 #改ページする章の数
 A4_SIZE = {"width":8.27 , "heigt":11.69}
 
 
-### Set figure size
+### Set figure size ###
 def chapTitleStr(row, chapNo, preTitle):
     title =""
 
@@ -38,7 +38,27 @@ def figRatio(path):
     return rate
 
 
-def writeMdTxt(table, outDir):
+### Check file exist and open mode ###
+def chkOpeMode(path, mode):
+    isFile = os.path.isfile(path)
+    if not(isFile):
+        if mode != "w": mode = "w"
+        else          : pass
+    return mode
+    
+
+### write file ###
+def writeMdTxt(txt, outDir, mdName, opMode):
+    ## Write *.md file
+    outPath = os.path.join(outDir, mdName)
+    opMode = chkOpeMode(outPath, opMode) # Check file exist and open mode    
+    f = open(outPath, mode=opMode, encoding="UTF-8")
+    f.write(txt)
+    f.close()
+
+
+### Make Called by graph Mark-down txt ###
+def writeCallByMdTxt(table, outDir, mdName, opMode="w"):
     chapNo = 0
     SecCnt = 0
     txt ="" # The body text (for output)
@@ -82,9 +102,23 @@ def writeMdTxt(table, outDir):
 
     if not(newpageFlg):
         txt += "<div style=\"page-break-before:always\"></div>\n\n"
+    writeMdTxt(txt, outDir, mdName, opMode)
 
-    ## Write *.md file
-    outPath = os.path.join(outDir, "affect_analysis_result.md")
-    f = open(outPath, mode="w", encoding="UTF-8")
-    f.write(txt)
-    f.close()
+
+### Make Called by graph Mark-down txt ###
+def writeMacroyMdTxt(table, outDir, mdName, opMode="a"):
+    ## section title and table head
+    txt = "## 変更マクロ一覧 \n"
+    txt += "|" + "|".join(table) + "|\n"
+
+    ## table setting
+    txt += "|"
+    for i in table: txt += "---|" 
+    txt += "\n"
+
+    ## Macro information
+    for row in table.itertuples(name=None):
+        txt += "|"
+        txt += "|".join(row[1:])
+        txt += "|\n"
+    writeMdTxt(txt, outDir, mdName, opMode)
