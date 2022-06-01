@@ -81,8 +81,8 @@ class UND():
 
     ### Get global variavle info ###
     def getGlbVarInfo(self, macroList):
+        dfList = [["Name", "Ref.", "Ent.", "File", "Row", "Col."]]
         if (macroList.shape[0] > 0):
-            dfList = [["Name", "Ref.", "Ent.", "File", "Row", "Col."]]
             print("--Get fixed macro information")
             for ent in self.db.ents("Macro"):
                 #print(ent)
@@ -92,7 +92,7 @@ class UND():
                         dfList.append(list(map(str, [ent.name(), ref.kindname(), ref.ent(), # Macro name, def. or use, ent. name 
                                                 ref.file(), ref.line(), ref.column()]))) # File name, row number, colum number 
             print("--End")
-            return dfList
+        return dfList
 
 
     ### Arrange output table ###
@@ -124,8 +124,7 @@ class UND():
 
     ### Main process ###
     def mainProc(self, gitApi):
-        #try:
-        if 1:
+        try:
             print("== Star UND result analysis ==")
             self.db = understand.open(self.dbPath)  
             ## Proc git diff analysis
@@ -139,12 +138,12 @@ class UND():
             self.outputChgTable() # output CSV 
             self.outputMcDoc() # output mark-down txt
 
-        # except:
-        #     print("** UND analysis fault. **")
+        except:
+            print("** UND analysis fault. **")
 
-        # finally:
-        #     gitApi.returenCurBranch()
-        #     print("== End UND result analysis ==")
+        finally:
+            gitApi.returenCurBranch()
+            print("== End UND result analysis ==")
 
 
     ### Create understand data base ###
